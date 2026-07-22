@@ -20,7 +20,7 @@ jobs:
     outputs:
       versions: ${{ steps.read.outputs.versions }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Read Minecraft versions from settings.gradle.kts
         id: read
@@ -39,7 +39,7 @@ jobs:
       matrix:
         minecraft: ${{ fromJson(needs.matrix.outputs.versions) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v6
