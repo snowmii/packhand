@@ -7,7 +7,7 @@
   A minecraft resourcepack QoL mod
 
 [![Release](https://img.shields.io/github/v/release/snowmii/packhand?style=for-the-badge&logo=github&color=blue)](https://github.com/snowmii/packhand/releases/latest)
-[![Build](https://img.shields.io/github/actions/workflow/status/snowmii/packhand/build.yml?branch=master&style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/snowmii/packhand/actions/workflows/build.yml)
+[![Build](https://img.shields.io/github/actions/workflow/status/snowmii/packhand/ci.yml?branch=master&style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/snowmii/packhand/actions/workflows/ci.yml)
 [![Modrinth](https://img.shields.io/modrinth/dt/packhand?style=for-the-badge&logo=modrinth&color=00AF5C&label=downloads)](https://modrinth.com/mod/packhand)
 [![License](https://img.shields.io/github/license/snowmii/packhand?style=for-the-badge&color=green)](LICENSE)
 
