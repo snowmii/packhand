@@ -1,38 +1,35 @@
 <a id="readme-top"></a>
 
 <div align="center">
-
 <h1>Packhand</h1>
 
 <p>
-  A minecraft resourcepack QoL mod 
-  <br />
-  <a href="https://modrinth.com/mod/packhand">Modrinth</a>
-  &middot;
-  <a href="../../issues/new?labels=bug">Report Bug</a>
-  &middot;
-  <a href="../../issues/new?labels=enhancement">Request Feature</a>
+  A minecraft resourcepack QoL mod
+
+[![Release](https://img.shields.io/github/v/release/snowmii/packhand?style=for-the-badge&logo=github&color=blue)](https://github.com/snowmii/packhand/releases/latest)
+[![Build](https://img.shields.io/github/actions/workflow/status/snowmii/packhand/build.yml?branch=master&style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/snowmii/packhand/actions/workflows/build.yml)
+[![Modrinth](https://img.shields.io/modrinth/dt/packhand?style=for-the-badge&logo=modrinth&color=00AF5C&label=downloads)](https://modrinth.com/mod/packhand)
+[![License](https://img.shields.io/github/license/snowmii/packhand?style=for-the-badge&color=green)](LICENSE)
+
+[![Minecraft](https://img.shields.io/badge/minecraft-26.1.2%20%7C%2026.2-62B47A?style=for-the-badge&logo=minecraft&logoColor=white)](https://modrinth.com/mod/packhand/versions)
+[![Fabric](https://img.shields.io/badge/loader-fabric%200.19.3%2B-DBD0B4?style=for-the-badge&logo=fabricmc&logoColor=white)](https://fabricmc.net/)
 </p>
 
 </div>
 
-Tired of vanilla resourcepack screen making you click tiny arrow buttons 20 times
-to move a pack to where you want it to be? <br />
-Sick of re-adding all the packs you use regularly after a somehow failed resourcepack loading?  <br />
-Wanna switch between tens and hundreds of packs in just a snap of the finger? <br />
-Packhand is exactly here to save your hand.
+Tired of the vanilla resource pack screen making you click tiny arrow buttons 20 times just to move a pack where you want it? <br />
+Sick of re-adding all your favorite packs and re-ordering them after a resource pack loading failure? <br />
+Want to switch between dozens—or even hundreds—of packs in the blink of an eye? <br />
 
-It allows you to:
-* Drag resourcepacks around
-* Save the packs you use into presets and load them all at once.
+Packhand is here to save your hand!
+
+
+It lets you:
+* Drag resourcepacks around with beautiful animations.
+* Save your favorite pack combinations as presets and load them with just a single click.
 
 And it supports:
 * Minecraft 26.1.2 and 26.2 with Fabric Loader 0.19.3 or newer
-
-TODOS:
-* Import/export pack presets
-* or request new features <a href="../../issues/new?labels=enhancement">here</a>
-* 1.21.x support
 
 ## Getting Started
 
@@ -61,13 +58,15 @@ To work against a single version:
 ./gradlew :26.2:runClient
 ```
 
-## License
-
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for details.
-
 ## Powered by
 
 * [FabricMC](https://fabricmc.net/)
 * [Stonecutter](https://stonecutter.kikugie.dev/) for multi-version supports
+
+## TODOS
+
+* Import/export pack presets
+* or request new features <a href="../../issues/new?labels=enhancement">here</a>
+* 1.21.x support
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
