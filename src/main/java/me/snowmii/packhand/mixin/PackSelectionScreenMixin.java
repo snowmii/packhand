@@ -1,6 +1,7 @@
 package me.snowmii.packhand.mixin;
 
 import me.snowmii.packhand.Packhand;
+import me.snowmii.packhand.config.PackhandConfig;
 import me.snowmii.packhand.preset.PresetManager;
 import me.snowmii.packhand.screen.PackSelectionScreenAccess;
 import me.snowmii.packhand.ui.PresetPanel;
@@ -14,6 +15,7 @@ import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.repository.PackRepository;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -45,7 +47,7 @@ public abstract class PackSelectionScreenMixin extends Screen implements PackSel
     private @Nullable PresetPanel packhand$presetPanel;
 
     @Unique
-    private String packhand$selectedPreset = "";
+    private @Nullable String packhand$selectedPreset;
 
     protected PackSelectionScreenMixin(final Component title) {
         super(title);
@@ -60,6 +62,7 @@ public abstract class PackSelectionScreenMixin extends Screen implements PackSel
         final CallbackInfo ci
     ) {
         this.packhand$resourcePackScreen = repository == Minecraft.getInstance().getResourcePackRepository();
+        this.packhand$selectedPreset = PackhandConfig.INSTANCE.lastSelectedPreset();
     }
 
     @Inject(method = "init", at = @At("TAIL"))
@@ -70,7 +73,6 @@ public abstract class PackSelectionScreenMixin extends Screen implements PackSel
         if (this.packhand$presetManager == null) {
             this.packhand$presetManager = new PresetManager(Packhand.configFile("presets.json"));
         }
-
         int x = this.availablePackList.getX();
         int width = this.selectedPackList.getRight() - x;
         int y = this.availablePackList.getY() - PresetPanel.HEIGHT;
@@ -84,7 +86,7 @@ public abstract class PackSelectionScreenMixin extends Screen implements PackSel
             this,
             this.availablePackList,
             this.selectedPackList,
-            this.packhand$selectedPreset,
+            this.packhand$selectedPreset == null ? "" : this.packhand$selectedPreset,
             this::addRenderableWidget,
             this::packhand$selectPreset
         );
@@ -126,7 +128,7 @@ public abstract class PackSelectionScreenMixin extends Screen implements PackSel
     }
 
     @Override
-    public boolean mouseClicked(final MouseButtonEvent event, final boolean doubleClick) {
+    public boolean mouseClicked(final @NonNull MouseButtonEvent event, final boolean doubleClick) {
         if (this.packhand$presetPanel != null) {
             this.packhand$presetPanel.closePresetListIfOutside(event.x(), event.y());
         }
@@ -136,6 +138,7 @@ public abstract class PackSelectionScreenMixin extends Screen implements PackSel
     @Unique
     private void packhand$selectPreset(final String name) {
         this.packhand$selectedPreset = name;
+        PackhandConfig.INSTANCE.setLastSelectedPreset(name);
     }
 
     @Override

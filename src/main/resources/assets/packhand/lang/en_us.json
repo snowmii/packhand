@@ -22,8 +22,8 @@
   "packhand.preset.save_failed": "Could not save preset",
   "packhand.preset.rename_failed": "Could not rename preset",
   "packhand.preset.delete_failed": "Could not delete preset",
-  "packhand.options.open": "Packhand options",
-  "packhand.options.title": "Packhand Options",
-  "packhand.options.hide_arrows": "Hide move arrows",
-  "packhand.options.animated_dragging": "Animated dragging"
+  "packhand.options.open": "packhand options",
+  "packhand.options.title": "packhand",
+  "packhand.options.hide_arrows": "Hide arrows",
+  "packhand.options.animated_dragging": "Animation"
 }

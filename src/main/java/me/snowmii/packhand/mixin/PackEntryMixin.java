@@ -24,7 +24,18 @@ public abstract class PackEntryMixin {
         PackSelectionModel.Entry pack = ((PackEntryAccessor)self).packhand$getPack();
         if (DragState.INSTANCE.isDraggedEntry(pack)) {
             ci.cancel();
+        } else {
+            // AbstractSelectionList assigns the row's final Y immediately before
+            // extracting its content. Applying the gap here avoids fighting mods
+            // that animate the list's scroll position during rendering.
+            DragState.INSTANCE.applyVisualOffset(self);
         }
+    }
+
+    @Inject(method = "extractContent", at = @At("TAIL"))
+    private void packhand$restoreDragOffset(final CallbackInfo ci) {
+        TransferableSelectionList.PackEntry self = (TransferableSelectionList.PackEntry)(Object)this;
+        DragState.INSTANCE.restoreVisualOffset(self);
     }
 
     @Redirect(

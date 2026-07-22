@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -31,7 +33,6 @@ public final class PresetPanel {
     private static final int GAP = 4;
     private static final int SELECTOR_WIDTH = 220;
     private static final int SAVE_WIDTH = 64;
-    private static final int CONFIG_WIDTH = 20;
     private static final int ROW_ACTION_WIDTH = 20;
     private static final SystemToast.SystemToastId NOTICE_ID = new SystemToast.SystemToastId();
 
@@ -82,23 +83,23 @@ public final class PresetPanel {
         List<String> names = presetChoices();
         this.selectedPreset = names.stream().filter(name -> name.equalsIgnoreCase(selectedName)).findFirst().orElse(names.isEmpty() ? "" : names.getFirst());
 
-        this.selector = Button.builder(selectorLabel(), button -> togglePresetList()).size(SELECTOR_WIDTH, WIDGET_HEIGHT).build();
-        this.saveButton = Button.builder(Component.translatable("packhand.preset.save"), button -> overwrite()).size(SAVE_WIDTH, WIDGET_HEIGHT).build();
+        this.selector = Button.builder(selectorLabel(), _ -> togglePresetList()).size(SELECTOR_WIDTH, WIDGET_HEIGHT).build();
+        this.saveButton = Button.builder(Component.translatable("packhand.preset.save"), _ -> overwrite()).size(SAVE_WIDTH, WIDGET_HEIGHT).build();
         this.configButton = new IconButton(
             this.font,
             Component.literal("⛭").setStyle(Style.EMPTY.withBold(true)),
             0xFFFFFFFF,
             true,
-            button -> ScreenNavigation.open(new PackhandOptionsScreen(this.screen))
+                _ -> ScreenNavigation.open(new PackhandOptionsScreen(this.screen))
         );
         this.configButton.setTooltip(Tooltip.create(Component.translatable("packhand.options.open")));
 
         this.nameBox = new EditBox(font, 0, 0, 200, WIDGET_HEIGHT, Component.translatable("packhand.preset.name"));
         this.nameBox.setHint(Component.translatable("packhand.preset.name.hint"));
         this.nameBox.setMaxLength(64);
-        this.createButton = Button.builder(Component.translatable("packhand.preset.create"), button -> submitEdit()).size(60, WIDGET_HEIGHT).build();
+        this.createButton = Button.builder(Component.translatable("packhand.preset.create"), _ -> submitEdit()).size(60, WIDGET_HEIGHT).build();
         this.nameBox.setResponder(value -> this.createButton.active = !value.isBlank());
-        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), button -> finishEditing()).size(60, WIDGET_HEIGHT).build();
+        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), _ -> finishEditing()).size(60, WIDGET_HEIGHT).build();
 
         addWidget.accept(this.selector);
         addWidget.accept(this.saveButton);
@@ -108,7 +109,6 @@ public final class PresetPanel {
         addWidget.accept(this.createButton);
         addWidget.accept(this.cancelButton);
         rebuildPresetButtons();
-
         finishEditing();
         updateButtons();
         reposition(x, y, width);
@@ -187,15 +187,13 @@ public final class PresetPanel {
 
     private void create() {
         try {
-            Preset preset = this.manager.create(this.nameBox.getValue(), selectedIds());
+            Preset preset = this.manager.create(this.nameBox.getValue(), comparableIds(selectedIds()));
             notice(Component.translatable("packhand.preset.saved"), Component.literal(preset.name()));
             selectPreset(preset.name());
             rebuildPresetButtons();
             finishEditing();
             updateButtons();
-        } catch (IllegalArgumentException exception) {
-            notice(Component.translatable("packhand.preset.save_failed"), Component.literal(exception.getMessage()));
-        } catch (PresetManager.PresetStorageException exception) {
+        } catch (IllegalArgumentException | PresetManager.PresetStorageException exception) {
             notice(Component.translatable("packhand.preset.save_failed"), Component.literal(exception.getMessage()));
         }
     }
@@ -214,7 +212,7 @@ public final class PresetPanel {
 
     private void overwrite() {
         try {
-            Preset preset = this.manager.overwrite(this.selectedPreset, selectedIds());
+            Preset preset = this.manager.overwrite(this.selectedPreset, comparableIds(selectedIds()));
             notice(Component.translatable("packhand.preset.overwritten"), Component.literal(preset.name()));
             updateButtons();
         } catch (IllegalArgumentException | PresetManager.PresetStorageException exception) {
@@ -248,26 +246,34 @@ public final class PresetPanel {
             }
         }
 
-        for (String id : preset.packs()) {
-            PackSelectionModel.Entry entry = entriesById(this.model.getUnselected().toList()).get(id);
-            if (entry != null && entry.canSelect()) {
+        // Model entries wrap a pack, not a list position, so they stay usable while the
+        // selection changes around them. Snapshot after unselecting, so packs that just
+        // moved back to the unselected side are included.
+        Map<String, PackSelectionModel.Entry> unselected = entriesById(this.model.getUnselected().toList());
+        // An unselected entry always reports canSelect(), so selecting the same id twice
+        // would insert it into the selected list twice.
+        List<String> ordered = preset.packs().stream().distinct().toList();
+        for (String id : ordered) {
+            PackSelectionModel.Entry entry = unselected.get(id);
+            if (entry != null) {
                 entry.select();
             }
         }
 
-        for (int target = 0; target < preset.packs().size(); target++) {
-            moveTo(preset.packs().get(target), target);
+        Map<String, PackSelectionModel.Entry> selected = entriesById(this.model.getSelected().toList());
+        for (int target = 0; target < ordered.size(); target++) {
+            PackSelectionModel.Entry entry = selected.get(ordered.get(target));
+            if (entry != null) {
+                moveTo(entry, target);
+            }
         }
         return missing;
     }
 
-    private void moveTo(final String id, final int requestedIndex) {
-        PackSelectionModel.Entry entry = entriesById(this.model.getSelected().toList()).get(id);
-        if (entry == null) {
-            return;
-        }
+    private void moveTo(final PackSelectionModel.Entry entry, final int requestedIndex) {
+        String id = entry.getId();
         int current = selectedIndex(id);
-        int target = Math.min(requestedIndex, Math.max(0, selectedIds().size() - 1));
+        int target = Math.clamp(selectedIds().size() - 1, 0, requestedIndex);
         int guard = 4096;
         while (current > target && entry.canMoveUp() && guard-- > 0) {
             entry.moveUp();
@@ -286,6 +292,25 @@ public final class PresetPanel {
 
     private List<String> selectedIds() {
         return this.model.getSelected().map(PackSelectionModel.Entry::getId).toList();
+    }
+
+    /**
+     * Ids of selected packs that cannot be unselected, such as server-enforced packs.
+     * They are present regardless of the loaded preset, so they must not count as a difference.
+     */
+    private Set<String> lockedIds() {
+        return this.model.getSelected()
+            .filter(entry -> !entry.canUnselect())
+            .map(PackSelectionModel.Entry::getId)
+            .collect(Collectors.toSet());
+    }
+
+    private List<String> comparableIds(final List<String> ids) {
+        return withoutLocked(ids, lockedIds());
+    }
+
+    private static List<String> withoutLocked(final List<String> ids, final Set<String> locked) {
+        return ids.stream().filter(id -> !locked.contains(id)).toList();
     }
 
     private static Map<String, PackSelectionModel.Entry> entriesById(final List<PackSelectionModel.Entry> entries) {
@@ -330,7 +355,10 @@ public final class PresetPanel {
         boolean hasPreset = !this.selectedPreset.isEmpty();
         this.selector.active = true;
         this.saveButton.active = hasPreset && this.manager.find(this.selectedPreset)
-            .map(preset -> !preset.packs().equals(selectedIds()))
+            .map(preset -> {
+                Set<String> locked = lockedIds();
+                return !withoutLocked(preset.packs(), locked).equals(withoutLocked(selectedIds(), locked));
+            })
             .orElse(false);
     }
 
@@ -438,7 +466,7 @@ public final class PresetPanel {
 
     private Component selectorLabel() {
         return Component.translatable("packhand.preset.selector", presetLabel(this.selectedPreset))
-            .append(this.presetListExpanded ? " \u25b3" : " \u25bd");
+            .append(this.presetListExpanded ? " △" : " ▽");
     }
 
     private List<String> presetChoices() {

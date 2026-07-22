@@ -95,6 +95,10 @@ public final class DragState {
         }
 
         this.target = listAt(available, selected, mouseX, mouseY);
+        // The dragged row is removed from the origin's visual layout and added to
+        // the target's. Keep the scroll bounds in sync with that temporary layout.
+        available.refreshScrollAmount();
+        selected.refreshScrollAmount();
         if (this.target != null) {
             autoScroll(this.target, mouseY);
             this.targetIndex = insertionIndex(this.target, this.entry.getId(), mouseY);
@@ -115,7 +119,7 @@ public final class DragState {
                 this.entry.unselect();
             }
         } else if (!fromSelected && toSelected) {
-            if (this.entry.canSelect() && this.entry.getCompatibility().isCompatible()) {
+            if (this.entry.canSelect()) {
                 String id = this.entry.getId();
                 this.entry.select();
                 PackSelectionModel.Entry selectedEntry = modelEntry(selected, id);
@@ -180,8 +184,8 @@ public final class DragState {
         }
     }
 
-    /** Temporarily moves surrounding entries to open an animated gap at the drop position. */
-    public void applyVisualOffsets(final TransferableSelectionList list) {
+    /** Advances the surrounding rows toward the gap opened at the drop position. */
+    public void updateVisualOffsets(final TransferableSelectionList list) {
         if (!this.dragging) {
             return;
         }
@@ -203,20 +207,41 @@ public final class DragState {
                 current = 0.0;
             }
             this.visualOffsets.put(widget, current);
-            int offset = (int)Math.round(current);
-            if (offset != 0) {
-                widget.setY(widget.getY() + offset);
-                this.appliedOffsets.put(widget, offset);
-            }
         }
     }
 
-    public void restoreVisualOffsets() {
-        for (Map.Entry<TransferableSelectionList.PackEntry, Integer> applied : this.appliedOffsets.entrySet()) {
-            TransferableSelectionList.PackEntry widget = applied.getKey();
-            widget.setY(widget.getY() - applied.getValue());
+    /** Applies an offset only while the row extracts its render state. */
+    public void applyVisualOffset(final TransferableSelectionList.PackEntry widget) {
+        int offset = (int)Math.round(this.visualOffsets.getOrDefault(widget, 0.0));
+        if (offset != 0) {
+            widget.setY(widget.getY() + offset);
+            this.appliedOffsets.put(widget, offset);
         }
+    }
+
+    public void restoreVisualOffset(final TransferableSelectionList.PackEntry widget) {
+        Integer offset = this.appliedOffsets.remove(widget);
+        if (offset != null) {
+            widget.setY(widget.getY() - offset);
+        }
+    }
+
+    private void restoreVisualOffsets() {
+        this.appliedOffsets.forEach((widget, offset) -> widget.setY(widget.getY() - offset));
         this.appliedOffsets.clear();
+    }
+
+    /** Mirrors the temporary drag gap in the list's scrollable content height. */
+    public int contentHeightAdjustment(final TransferableSelectionList list) {
+        if (!this.dragging || this.entry == null || this.target == this.origin) {
+            return 0;
+        }
+
+        int draggedHeight = draggedEntryHeight();
+        if (list == this.origin) {
+            return -draggedHeight;
+        }
+        return list == this.target ? draggedHeight : 0;
     }
 
     private double desiredOffset(
@@ -248,6 +273,8 @@ public final class DragState {
     }
 
     public void clear() {
+        TransferableSelectionList previousOrigin = this.origin;
+        TransferableSelectionList previousTarget = this.target;
         this.origin = null;
         this.entry = null;
         this.target = null;
@@ -255,6 +282,20 @@ public final class DragState {
         this.targetIndex = 0;
         restoreVisualOffsets();
         this.visualOffsets.clear();
+        if (previousOrigin != null) {
+            previousOrigin.refreshScrollAmount();
+        }
+        if (previousTarget != null && previousTarget != previousOrigin) {
+            previousTarget.refreshScrollAmount();
+        }
+    }
+
+    private int draggedEntryHeight() {
+        if (this.origin == null || this.entry == null) {
+            return 0;
+        }
+        TransferableSelectionList.PackEntry widget = packEntry(this.origin, this.entry.getId());
+        return widget == null ? 0 : widget.getHeight();
     }
 
     private static TransferableSelectionList listAt(
@@ -310,9 +351,14 @@ public final class DragState {
     }
 
     private static PackSelectionModel.Entry modelEntry(final TransferableSelectionList list, final String id) {
+        TransferableSelectionList.PackEntry widget = packEntry(list, id);
+        return widget == null ? null : ((PackEntryAccessor)widget).packhand$getPack();
+    }
+
+    private static TransferableSelectionList.PackEntry packEntry(final TransferableSelectionList list, final String id) {
         for (TransferableSelectionList.Entry child : list.children()) {
             if (child instanceof TransferableSelectionList.PackEntry packEntry && packEntry.getPackId().equals(id)) {
-                return ((PackEntryAccessor)packEntry).packhand$getPack();
+                return packEntry;
             }
         }
         return null;
