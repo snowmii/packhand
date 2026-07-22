@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "me.snowmii.packhand.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "AbstractSelectionListMixin",
+    "PackEntryMixin",
+    "PackSelectionScreenMixin",
+    "TransferableSelectionListMixin",
+    "accessor.PackEntryAccessor",
+    "accessor.TransferableSelectionListAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

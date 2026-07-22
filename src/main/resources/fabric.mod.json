@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "packhand",
+  "version": "${version}",
+  "name": "Packhand",
+  "description": "Drag-and-drop resource pack selection and reusable presets.",
+  "authors": ["snowmii"],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.snowmii.packhand.Packhand"
+    ]
+  },
+  "mixins": ["packhand.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=25"
+  }
+}
